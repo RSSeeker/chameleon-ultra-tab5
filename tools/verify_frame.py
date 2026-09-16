@@ -27,6 +27,17 @@ from pathlib import Path
 # https://github.com/chameleonultra/ChameleonUltra if it is somewhere else:
 #     $env:CU_UPSTREAM = "D:\src\ChameleonUltra"
 CU_UPSTREAM = Path(os.environ.get("CU_UPSTREAM", r"C:\Users\Jiang\Downloads\ChameleonUltra-main"))
+# The probes compare against upstream sources; without them there is nothing to
+# compare, so refuse to run rather than report a comparison of nothing.
+_UPSTREAM_SENTINEL = CU_UPSTREAM / "software" / "script" / "chameleon_cmd.py"
+if not _UPSTREAM_SENTINEL.is_file():
+    raise SystemExit(
+        f"upstream ChameleonUltra checkout not found at {CU_UPSTREAM}\n"
+        f"  (looked for {_UPSTREAM_SENTINEL})\n"
+        "set CU_UPSTREAM to your checkout of "
+        "https://github.com/RfidResearchGroup/ChameleonUltra"
+    )
+
 
 
 REPO = Path(__file__).resolve().parent.parent

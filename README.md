@@ -58,6 +58,12 @@ idf.py build
 唯一从注册表拉过的是 `espressif/cmake_utilities`，它也已经放在
 `firmware/managed_components/` 里一起提交了。
 
+LVGL 9.2.2 也是随仓库提交的，但**去掉了它的 `demos/`（45 MB）和 `examples/`（7 MB）**：
+`CONFIG_LV_BUILD_EXAMPLES=n`，本项目不调用任何 `lv_example_*()`。这两个目录本身
+仍然保留（里面各有一个 `.gitkeep` 说明原因），因为 LVGL 的 `esp.cmake` 会**无条件**把它们
+当作 include 目录注册给 `idf_component_register()` —— 少一个目录，配置阶段就会直接失败。
+（这一点是"把仓库 clone 到干净目录里真编一遍"测出来的，不是推断。）
+
 ### 烧录
 
 ```powershell

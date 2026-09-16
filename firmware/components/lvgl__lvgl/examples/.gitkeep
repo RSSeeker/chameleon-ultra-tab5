@@ -1,0 +1,7 @@
+Kept empty on purpose.
+LVGL 9.2.2's env_support/cmake/esp.cmake passes this directory to
+idf_component_register() as an include directory unconditionally, so it has to
+exist even when LVGL's examples are not built - which is the case here:
+sdkconfig.defaults sets CONFIG_LV_BUILD_EXAMPLES=n.
+Not committed: 6.8 MB of example sources that nothing in this project compiles.
+Take them from the LVGL 9.2.2 release if you ever want them.

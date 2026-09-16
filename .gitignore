@@ -19,15 +19,16 @@ firmware/dependencies.lock
 
 # ---------------------------------------------------------------------------
 # Third-party components are vendored under firmware/components/ so the build
-# works without network access (see README section 5). Three LVGL trees are left
-# out because nothing in the build reads them:
-#   demos/          45 MB - only compiled when CONFIG_LV_BUILD_EXAMPLES is on
-#   examples/        7 MB - same
-#   env_support/cmsis-pack/  6 MB - a pack for CMSIS toolchains
-# The rest of env_support/ (env_support/cmake/esp.cmake) IS needed and committed.
+# works without network access (see README section 5). The bulk of LVGL's
+# demos/ and examples/ is left out because nothing in the build compiles it,
+# but both directories themselves must exist: LVGL's esp.cmake passes them to
+# idf_component_register() as include directories unconditionally. Each keeps a
+# .gitkeep explaining that.
 # ---------------------------------------------------------------------------
-firmware/components/lvgl__lvgl/demos/
-firmware/components/lvgl__lvgl/examples/
+firmware/components/lvgl__lvgl/demos/*
+!firmware/components/lvgl__lvgl/demos/.gitkeep
+firmware/components/lvgl__lvgl/examples/*
+!firmware/components/lvgl__lvgl/examples/.gitkeep
 firmware/components/lvgl__lvgl/env_support/cmsis-pack/
 
 # ---------------------------------------------------------------------------

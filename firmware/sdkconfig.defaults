@@ -69,6 +69,13 @@ CONFIG_USB_OTG_SUPPORTED=y
 # ---- LVGL (Kconfig path, no lv_conf.h) ----------------------------------
 # LVGL v9.2.2 is vendored as components/lvgl__lvgl with its own Kconfig.
 CONFIG_LV_CONF_SKIP=y
+# LVGL's own default is y, which compiles all of examples/ (~7 MB of sources) and
+# makes esp.cmake glob them into the component. Nothing here calls lv_example_*(),
+# so switch it off: it shortens the build and lets the repository ship without the
+# examples tree. Note this does NOT let the examples/ directory go away - see
+# components/lvgl__lvgl/examples/.gitkeep - because esp.cmake passes it to
+# idf_component_register() as an include directory either way.
+CONFIG_LV_BUILD_EXAMPLES=n
 CONFIG_LV_COLOR_DEPTH_16=y
 CONFIG_LV_USE_CLIB_MALLOC=y
 CONFIG_LV_USE_CLIB_STRING=y

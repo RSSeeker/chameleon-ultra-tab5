@@ -1,0 +1,7 @@
+Kept empty on purpose.
+LVGL 9.2.2's env_support/cmake/esp.cmake passes this directory to
+idf_component_register() as an include directory unconditionally, so it has to
+exist even though no demo is built: every CONFIG_LV_USE_DEMO_* is off in
+sdkconfig.defaults, so no source is globbed from here.
+Not committed: 45 MB of demo assets (fonts, images, videos) that nothing in this
+project compiles. Take them from the LVGL 9.2.2 release if you ever want them.

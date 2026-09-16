@@ -1,0 +1,21 @@
+# Line endings: store LF in the repository. The sources here are LF; without this
+# a Windows checkout with core.autocrlf=true rewrites every file on the next touch
+# and the diff noise buries real changes.
+* text=auto
+
+# Vendored third-party trees are kept byte for byte as their upstreams ship them,
+# so a diff against the upstream release stays readable.
+firmware/components/lvgl__lvgl/** -text
+firmware/components/espressif__*/** -text
+firmware/components/esp_lcd_st7121/** -text
+firmware/components/m5stack_tab5/** -text
+
+# Binary
+*.pack binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bin binary
+*.otf binary
+*.ttf binary

@@ -1,0 +1,122 @@
+# ChameleonUltra on M5Stack Tab5 - default sdkconfig
+#
+# Board bring-up values mirror M5Tab5-UserDemo/platforms/tab5/sdkconfig.defaults
+# (they are board facts and must stay identical). LVGL is configured through the
+# LVGL Kconfig instead of a custom lv_conf.h.
+
+CONFIG_IDF_TARGET="esp32p4"
+
+# ---- flash / PSRAM ------------------------------------------------------
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_SPEED_200M=y
+CONFIG_SPIRAM_XIP_FROM_PSRAM=y
+CONFIG_CACHE_L2_CACHE_256KB=y
+CONFIG_CACHE_L2_CACHE_LINE_128B=y
+# Required by components/chameleon_crypto: crapto1.c carries a 1 MiB filter
+# lookup table that has to live in PSRAM because internal SRAM only has ~317 KB
+# free. Without this switch EXT_RAM_BSS_ATTR expands to nothing (see
+# esp_attr.h), the table silently lands in internal .bss, and the link fails
+# with a wall of:
+#   error: --enable-non-contiguous-regions discards section `.sbss.*`
+# The failure only appears once something actually references the crypto
+# component - while it was dead code the linker dropped the table entirely.
+CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y
+CONFIG_FREERTOS_HZ=1000
+CONFIG_IDF_EXPERIMENTAL_FEATURES=y
+
+# ---- logging ------------------------------------------------------------
+# The USB-Serial-JTAG console has a small FIFO. Boot-time chatter at 115200 baud
+# overflows it and the application's own log lines get dropped before the host
+# opens the port, which makes bring-up undebuggable. Keep the app at INFO but
+# silence the chatty drivers.
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_MAXIMUM_LEVEL_DEBUG=y
+CONFIG_BOOTLOADER_LOG_LEVEL_WARN=y
+
+# ---- watchdog -----------------------------------------------------------
+# A stuck task must stay observable on the console instead of resetting the
+# board: the watchdog's periodic register dump is large and would push the
+# application's own log lines out of the console FIFO.
+CONFIG_ESP_TASK_WDT_EN=y
+CONFIG_ESP_TASK_WDT_PANIC=n
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=30
+
+# ---- console ------------------------------------------------------------
+# The Tab5 USB-C port is the serial/JTAG console. The Chameleon Ultra attaches
+# to the USB-A host port, so console and device never collide.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+CONFIG_USJ_ENABLE_USB_SERIAL_JTAG=y
+
+# ---- I2C -----------------------------------------------------------------
+# The Tab5 BSP (components/m5stack_tab5) initialises I2C with the new
+# driver/i2c_master.h API (i2c_new_master_bus / i2c_master_bus_add_device).
+# The legacy I2C driver object (driver/i2c/i2c.c) still gets linked into the
+# image, and its __attribute__((constructor)) check_i2c_driver_conflict()
+# aborts at boot with:
+#     E i2c: CONFLICT! driver_ng is not allowed to be used with this old driver
+# Nothing here uses the legacy I2C API, so skip that startup guard. This is the
+# escape hatch IDF provides for exactly this case.
+CONFIG_I2C_SKIP_LEGACY_CONFLICT_CHECK=y
+
+# ---- USB host (USB-A port, Chameleon Ultra CDC-ACM) ---------------------
+CONFIG_USB_OTG_SUPPORTED=y
+
+# ---- LVGL (Kconfig path, no lv_conf.h) ----------------------------------
+# LVGL v9.2.2 is vendored as components/lvgl__lvgl with its own Kconfig.
+CONFIG_LV_CONF_SKIP=y
+CONFIG_LV_COLOR_DEPTH_16=y
+CONFIG_LV_USE_CLIB_MALLOC=y
+CONFIG_LV_USE_CLIB_STRING=y
+CONFIG_LV_USE_CLIB_SPRINTF=y
+CONFIG_LV_TXT_COLOR_CMD="#"
+CONFIG_LV_DEF_REFR_PERIOD=25
+# esp_lvgl_port rotates 90/270 degree displays with the PPA (hardware) engine,
+# which requires the draw buffers to be aligned to the data cache line size.
+# heap_caps_aligned_alloc() uses LV_DRAW_BUF_ALIGN for those buffers, and the
+# P4 cache line is 128 bytes, so the 4 byte default makes the PPA reject the
+# rotation buffer with ESP_ERR_INVALID_ARG:
+#   ppa_do_scale_rotate_mirror: out.buffer addr or out.buffer_size not aligned
+#   to cache line size
+CONFIG_LV_DRAW_BUF_ALIGN=128
+CONFIG_LV_FONT_MONTSERRAT_12=y
+CONFIG_LV_FONT_MONTSERRAT_14=y
+CONFIG_LV_FONT_MONTSERRAT_16=y
+CONFIG_LV_FONT_MONTSERRAT_18=y
+CONFIG_LV_FONT_MONTSERRAT_20=y
+CONFIG_LV_FONT_MONTSERRAT_24=y
+CONFIG_LV_FONT_MONTSERRAT_28=y
+CONFIG_LV_FONT_MONTSERRAT_32=y
+CONFIG_LV_FONT_MONTSERRAT_40=y
+CONFIG_LV_FONT_DEFAULT_MONTSERRAT_14=y
+CONFIG_LV_USE_LABEL=y
+CONFIG_LV_USE_TEXTAREA=y
+CONFIG_LV_USE_KEYBOARD=y
+CONFIG_LV_USE_BUTTON=y
+CONFIG_LV_USE_BUTTONMATRIX=y
+CONFIG_LV_USE_TABLE=y
+CONFIG_LV_USE_TABVIEW=y
+CONFIG_LV_USE_LIST=y
+CONFIG_LV_USE_ROLLER=y
+CONFIG_LV_USE_DROPDOWN=y
+CONFIG_LV_USE_SWITCH=y
+CONFIG_LV_USE_SLIDER=y
+CONFIG_LV_USE_BAR=y
+CONFIG_LV_USE_SPINNER=y
+CONFIG_LV_USE_MSGBOX=y
+CONFIG_LV_USE_CHECKBOX=y
+CONFIG_LV_USE_THEME_DEFAULT=y
+CONFIG_LV_THEME_DEFAULT_DARK=y
+CONFIG_LV_USE_FLEX=y
+CONFIG_LV_USE_GRID=y
+
+# ---- Bluetooth (experimental BLE transport) -----------------------------
+# DISABLED by default. The ESP32-P4 has no radio of its own: BLE would have to
+# be routed through the on-board ESP32-C6 with esp_hosted BT-over-SDIO support.
+# The C6 firmware shipped with the Tab5 (ESP32C6-WiFi-SDIO-Interface) is a
+# Wi-Fi only image, so enabling this without first flashing a BT-capable C6
+# slave firmware will not work.
